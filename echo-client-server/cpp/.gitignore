@@ -27,3 +27,9 @@ install_manifest.txt
 # === OS-specific ===
 .DS_Store                   # macOS
 Thumbs.db                   # Windows
+
+# === Optional: Ignore local config ===
+*.iml
+*.vcxproj*
+*.sln
+*.ncb
