@@ -1,0 +1,10 @@
+.idea/
+
+# macOS system files
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Custom local configs
+*.local
+*.env
