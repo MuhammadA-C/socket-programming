@@ -1,0 +1,29 @@
+# === Build Directories ===
+/build/
+cmake-build-*/
+
+# === CMake Generated Files ===
+CMakeCache.txt
+CMakeFiles/
+Makefile
+cmake_install.cmake
+CTestTestfile.cmake
+install_manifest.txt
+
+# === Executables and Object Files ===
+*.o
+*.obj
+*.exe
+*.out
+*.a
+*.so
+*.dylib
+
+# === IDE Files ===
+.idea/                      # CLion
+.vscode/                    # VSCode
+*.code-workspace
+
+# === OS-specific ===
+.DS_Store                   # macOS
+Thumbs.db                   # Windows
