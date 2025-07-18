@@ -8,7 +8,7 @@
 
 class TcpServer {
 public:
-    int createSocket(const char* host, const char* port, int maxPending, bool isServer);
+    int createSocket(const char* host, const char* port, int maxPending);
 
 private:
 

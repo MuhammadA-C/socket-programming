@@ -14,9 +14,7 @@
 
 
 // Move function to a different class and file
-int TcpServer::createSocket(const char *host, const char *port, const int maxPending, bool isServer) {
-    // need to make code create either a server or client socket
-
+int TcpServer::createSocket(const char *host, const char *port, const int maxPending) {
     struct addrinfo addressInfoHint;
     struct addrinfo *addressInfoResult;
     struct addrinfo *ptrAddressInfo;
@@ -76,7 +74,7 @@ int main() {
     const int MAX_PENDING = 5;
 
     TcpServer server;
-    int server_socket = server.createSocket(NULL, std::to_string(PORT).c_str(), MAX_PENDING, true);
+    int server_socket = server.createSocket(NULL, std::to_string(PORT).c_str(), MAX_PENDING);
     if (server_socket == -1) {
         std::cerr << "Server setup failed." << '\n';
         return 1;
