@@ -50,4 +50,13 @@ If we already found a key and the associated value, then the next key found woul
 6. The next key find will be a sibling of the prior key
 7. Repeat steps #1-6
 
+### Error Handling 
+
+If any of the below is found while parsing, exit immediately and return an error:
+1. Missing `:` after key
+2. Unclosed `{` or `[`
+3. Unquoted keys
+4. Incorrect strings or numbers
+5. Trailing commas (extra comma at the end of a list or object)
+
 
