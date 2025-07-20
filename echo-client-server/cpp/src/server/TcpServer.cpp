@@ -8,6 +8,11 @@
 #include <unistd.h>
 #include <netdb.h>
 
+#include "../util/Logger.h"
+
+
+Logger logger;
+
 
 // Future Improvement: Move function to a different class and file
 int TcpServer::createServer(const char *host, const char *port, int maxPending) {
@@ -22,7 +27,7 @@ int TcpServer::createServer(const char *host, const char *port, int maxPending) 
 
     int status = getaddrinfo(host, port, &addressInfoHint, &addressInfoResult);
     if (status != 0) {
-        std::cerr << "getaddrinfo() error: " << gai_strerror(status) << '\n';
+        logger.log(Logger::STDERR, false, "getaddrinfo() failed.");
         return -1;
     }
 
@@ -49,14 +54,14 @@ int TcpServer::createServer(const char *host, const char *port, int maxPending) 
 
     freeaddrinfo(addressInfoResult);
     if (ptrAddressInfo == NULL) {
-        std::cerr << "Failed creating socket and binding to port." << '\n';
+        logger.log(Logger::STDERR, false, "Failed creating socket and binding to port.");
         close(serverSocket);
         return -1;
     }
 
     // Setting server socket to listen to port for connections
     if (listen(serverSocket, maxPending) == -1) {
-        std::cerr << "Failed listening for connections." << '\n';
+        logger.log(Logger::STDERR, false, "Failed listening for connections.");
         close(serverSocket);
         return -1;
     }
@@ -65,13 +70,13 @@ int TcpServer::createServer(const char *host, const char *port, int maxPending) 
 
 bool TcpServer::setRecvTimeout(const int socketFd, const int seconds) {
     if (socketFd < 0) {
-        std::cerr << "setRecvTimeout() socket file descriptor is not valid\n";
+        logger.log(Logger::STDERR, false, "setRecvTimeout() socket file descriptor is not valid");
         return false;
     }
 
     const int MAX_TIMEOUT_SECONDS = 60;
     if (seconds <= 0 || seconds > MAX_TIMEOUT_SECONDS) {
-        std::cerr << "setRecvTimeout() seconds must be < 60 and > 0\n";
+        logger.log(Logger::STDERR, false, "setRecvTimeout() seconds must be < 60 and > 0");
         return false;
     }
 
@@ -79,38 +84,22 @@ bool TcpServer::setRecvTimeout(const int socketFd, const int seconds) {
     timeout.tv_sec = seconds;
     timeout.tv_usec = 0;
     if (setsockopt(socketFd, SOL_SOCKET, SO_RCVTIMEO, &timeout, sizeof(timeout)) < 0) {
-        std::cerr << "setsockopt(SO_RCVTIMEO) failed: " << strerror(errno) << '\n';
+        logger.log(Logger::STDERR, false, "setsockopt(SO_RCVTIMEO) failed");
         return false;
     }
-    std::cout << "setsockopt(SO_RCVTIMEO) set socket timeout to " << seconds << '\n';
+    logger.log(Logger::STDOUT, false, "setsockopt(SO_RCVTIMEO) set socket timeout to " + std::to_string(seconds));
+
     return true;
 }
 
 std::string TcpServer::createEchoMessage(const std::string &messageBody) {
     const std::string ECHO_PROTOCOL = "ECHO";
     const std::string END_SYMBOL = "\r\n";
-
     return ECHO_PROTOCOL + " " + std::to_string(messageBody.size()) + END_SYMBOL + messageBody + END_SYMBOL;
 }
 
-std::string convertMessage(const std::string &message) {
-    std::string convertedMessage;
 
-    for (int i = 0; i < message.length(); i++) {
-        if (message[i] == '\r') {
-            convertedMessage += "\\r";
-            continue;
-        } else if (message[i] == '\n') {
-            convertedMessage += "\\n";
-            continue;
-        }
-        convertedMessage += message[i];
-    }
-    return convertedMessage;
-}
-
-
-int main() {
+int  main() {
     // Note: Allow on server startup to supply port number, max pending, and help via CLI
     const int PORT = 9002;
     const int MAX_PENDING = 5;
@@ -118,15 +107,16 @@ int main() {
 
     int serverSocket = TcpServer::createServer(NULL, std::to_string(PORT).c_str(), MAX_PENDING);
     if (serverSocket == -1) {
-        std::cerr << "(Server) Setup failed." << '\n';
+        logger.log(Logger::STDERR, false, "Setup failed.");
         return 1;
     }
-    std::cout << "(Server) Listening on port " << PORT << '\n';
+    logger.log(Logger::STDOUT, false, "Listening on port " + std::to_string(PORT));
+
 
     // Continually accepts client connections and sends the response echoed back
     while (true) {
         int clientFd = accept(serverSocket, NULL, NULL);
-        std::cout << "(Server) Accepting client connection\n";
+        logger.log(Logger::STDOUT, false, "Accepting client connection");
 
         // Need a timeout in case the client has too long of a delay between messages/recv()
         TcpServer::setRecvTimeout(clientFd, 10);
@@ -147,24 +137,26 @@ int main() {
             break;
         }
         std::string clientMessage(buffer.begin(), buffer.end());
-        std::cout << "(Server) Received the following message from the client: " << clientMessage << '\n';
+        logger.log(Logger::STDOUT, false, "Received the following message from the client: " + clientMessage);
+
 
         // Future Improvement: Change send() to a loop since 1 send() might not be enough
         // Responds back to client
         if (receivedBytes == -1) {
             const std::string response = TcpServer::createEchoMessage("Failed to receive message");
-            std::cout << "\n(Server) Responded back with: " << convertMessage(response) << "\n\n";
+            logger.log(Logger::STDOUT, false, "Responded back with: " + response);
             send(clientFd, response.c_str(), response.size(), 0);
         } else {
             // echo back message
             const std::string response = TcpServer::createEchoMessage(clientMessage);
-            std::cout << "\n(Server) Responded back with: " << convertMessage(response) << "\n\n";
+            logger.log(Logger::STDOUT, false, "Responded back with: " + response);
             send(clientFd, response.c_str(), response.size(), 0);
         }
 
         // Clean up socket
         close(clientFd);
-        std::cout << "(Server) Attempted to close client socket\n";
+        logger.log(Logger::STDOUT, false, "Attempted to close client socket");
+        std::cout << "\n=== Ready for next request ===" << "\n";
     }
 
     // Cleans up socket
