@@ -5,7 +5,7 @@
 
 class TcpServer {
 public:
-    int createServer(const char* host, const char* port, int maxPending);
+    static int createServer(const char* host, const char* port, int maxPending);
     static bool setRecvTimeout(int socketFd, int seconds);
     static std::string createEchoMessage(const std::string &messageBody);
 

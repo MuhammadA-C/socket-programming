@@ -11,7 +11,7 @@
 
 // Future Improvement: Move function to a different class and file
 int TcpServer::createServer(const char *host, const char *port, int maxPending) {
-    struct addrinfo addressInfoHint;
+    struct addrinfo addressInfoHint{};
     struct addrinfo *addressInfoResult;
     struct addrinfo *ptrAddressInfo;
 
@@ -104,8 +104,7 @@ int main() {
     const int MAX_PENDING = 5;
     const int BUFFER_SIZE = 1024;
 
-    TcpServer server;
-    int serverSocket = server.createServer(NULL, std::to_string(PORT).c_str(), MAX_PENDING);
+    int serverSocket = TcpServer::createServer(NULL, std::to_string(PORT).c_str(), MAX_PENDING);
     if (serverSocket == -1) {
         std::cerr << "Server: Setup failed." << '\n';
         return 1;
@@ -130,7 +129,7 @@ int main() {
             /*
              * Future Improvement:
              * 1. Get length of the message the client is sending from the header
-             * 2.  Keep reading until full message size is received (or until timeout)
+             * 2. Keep reading until full message size is received (or until timeout)
              */
         }
 
