@@ -26,16 +26,28 @@
 * A value may be a terminal value (like a string/number) or a nested container (array/object)
 * Your parser should keep going deeper (recursing) only when the value itself is a container (`{}` or `[]`)
 
-### Note-1
+### Notes
+
+#### Note-1
 
 If we're parsing an object and we find a key, then we stop treating it as a container and expect a value next — that value may itself be an object, in which case we recurse again.
 
-### Note-2
+#### Note-2
 
 If we find a key we would add it to the Jason object as a key, otherwise we would add it as a value to the previously key found.
 
-### Note-3
+#### Note-3
 
 If we already found a key and the associated value, then the next key found would be a sibling of the previous key.
+
+### Psuedocode
+
+1. Parse until we find a key
+2. Once a key is found, look for its value (which is after the colon)
+3. Add the value found to the JSON parse object as the value of the key if it's a primitive value (i.e. integer/number, string, boolean, or null)
+4. Otherwise, treat the value as an object or array (after checking for { or [), and then find the values that aren't also keys
+5. Add the object/array as a value to the previously found key
+6. The next key find will be a sibling of the prior key
+7. Repeat steps #1-6
 
 
