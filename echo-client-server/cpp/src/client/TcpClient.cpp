@@ -13,6 +13,55 @@
 #include <unistd.h>
 #include <netdb.h>
 #include <cstring>
+#include "../util/logger/Logger.h"
+
+
+// GLOBAL VARIABLES //
+const int PORT = 9002;
+const int MAX_PENDING = 5;
+
+
+// MAIN ENTRY POINT OF APPLICATION //
+int main() {
+    // Note: Allow on client startup to supply port number, max pending, and help via CLI
+
+    int clientSocket = TcpClient::createClient("localhost", std::to_string(PORT).c_str(), MAX_PENDING);
+    if (clientSocket == -1) {
+        Logger::log(Logger::STDERR, true, "Setup failed.");
+        return 1;
+    }
+
+    // Future Improvement: Use a loop to send() since more than 1 send() might be needed
+    // Sending message to server
+    std::string message = "Hello World from client";
+    if (send(clientSocket, message.c_str(), message.size(), 0) == -1) {
+        Logger::log(Logger::STDERR, true, "Failed to send message to server");
+        close(clientSocket);
+        return 1;
+    }
+    Logger::log(Logger::STDOUT, true, "Sent the following message to the server: " + message);
+
+    // IMPORTANT: Need to parse response from server and remove the '\r\n\r\n' since the console isn't printing it properly
+    int length = 0;
+    std::vector<char> tempBuffer(80);
+
+    recv(clientSocket, tempBuffer.data(), tempBuffer.size(), 0);
+
+    //while ((length = recv(clientSocket, tempBuffer.data(), tempBuffer.size(), 0)) > 0) {
+    //  std::string serverResponse(tempBuffer.begin(), tempBuffer.begin() + length);
+    //  std::cout << "Client: Server responded back saying: " << serverResponse << '\n';
+    //}
+
+    std::string serverResponse(tempBuffer.begin(), tempBuffer.end());
+    Logger::log(Logger::STDOUT, true, "Server responded back saying: " + serverResponse);
+
+    // Clean up
+    close(clientSocket);
+    return 0;
+}
+
+
+// METHODS //
 
 // Future Improvement: Move function to a different class and file
 int TcpClient::createClient(const char *host, const char *port, int maxPending) {
@@ -27,7 +76,7 @@ int TcpClient::createClient(const char *host, const char *port, int maxPending) 
 
     int status = getaddrinfo(host, port, &addressInfoHint, &addressInfoResult);
     if (status != 0) {
-        std::cerr << "getaddrinfo() error: " << gai_strerror(status) << '\n';
+        Logger::log(Logger::STDERR, true, "getaddrinfo() error");
         return -1;
     }
 
@@ -54,7 +103,7 @@ int TcpClient::createClient(const char *host, const char *port, int maxPending) 
 
     freeaddrinfo(addressInfoResult);
     if (ptrAddressInfo == NULL) {
-        std::cerr << "Failed creating socket and connecting to port." << '\n';
+        Logger::log(Logger::STDERR, true, "Failed creating socket and connecting to port.");
         close(clientSocket);
         return -1;
     }
@@ -63,13 +112,13 @@ int TcpClient::createClient(const char *host, const char *port, int maxPending) 
 
 bool TcpClient::setRecvTimeout(const int socketFd, const int seconds) {
     if (socketFd < 0) {
-        std::cerr << "setRecvTimeout() socket file descriptor is not valid\n";
+        Logger::log(Logger::STDERR, true, "setRecvTimeout() socket file descriptor is not valid");
         return false;
     }
 
     const int MAX_TIMEOUT_SECONDS = 60;
     if (seconds <= 0 || seconds > MAX_TIMEOUT_SECONDS) {
-        std::cerr << "setRecvTimeout() seconds must be < 60 and > 0\n";
+        Logger::log(Logger::STDERR, true, "setRecvTimeout() seconds must be < 60 and > 0");
         return false;
     }
 
@@ -77,61 +126,9 @@ bool TcpClient::setRecvTimeout(const int socketFd, const int seconds) {
     timeout.tv_sec = seconds;
     timeout.tv_usec = 0;
     if (setsockopt(socketFd, SOL_SOCKET, SO_RCVTIMEO, &timeout, sizeof(timeout)) < 0) {
-        std::cerr << "setsockopt(SO_RCVTIMEO) failed: " << strerror(errno) << '\n';
+        Logger::log(Logger::STDERR, true, "setsockopt(SO_RCVTIMEO) failed.");
         return false;
     }
-    std::cout << "setsockopt(SO_RCVTIMEO) set socket timeout to " << seconds << '\n';
+    Logger::log(Logger::STDOUT, true, "setsockopt(SO_RCVTIMEO) set socket timeout to " + std::to_string(seconds));
     return true;
-}
-
-std::string TcpClient::createEchoMessage(const std::string &messageBody) {
-    // if (messageBody.empty()) {
-    //  return "";
-    //}
-
-    const std::string ECHO_PROTOCOL = "ECHO";
-    const std::string END_SYMBOL = "\r\n";
-
-    return ECHO_PROTOCOL + " " + std::to_string(messageBody.size()) + END_SYMBOL + messageBody + END_SYMBOL;
-}
-
-
-int main() {
-    // Note: Allow on client startup to supply port number, max pending, and help via CLI
-    const int PORT = 9002;
-    const int MAX_PENDING = 5;
-
-    int clientSocket = TcpClient::createClient("localhost", std::to_string(PORT).c_str(), MAX_PENDING);
-    if (clientSocket == -1) {
-        std::cerr << "Client: Setup failed." << '\n';
-        return 1;
-    }
-
-    // Future Improvement: Use a loop to send() since more than 1 send() might be needed
-    // Sending message to server
-    std::string message = "Hello World from client";
-    if (send(clientSocket, message.c_str(), message.size(), 0) == -1) {
-        std::cerr << "Client: Failed to send message to server\n";
-        close(clientSocket);
-        return 1;
-    }
-    std::cout << "Client: Sent the following message to the server: " << message << '\n';
-
-    // IMPORTANT: Need to parse response from server and remove the '\r\n\r\n' since the console isn't printing it properly
-    int length = 0;
-    std::vector<char> tempBuffer(80);
-
-    recv(clientSocket, tempBuffer.data(), tempBuffer.size(), 0);
-
-    //while ((length = recv(clientSocket, tempBuffer.data(), tempBuffer.size(), 0)) > 0) {
-      //  std::string serverResponse(tempBuffer.begin(), tempBuffer.begin() + length);
-      //  std::cout << "Client: Server responded back saying: " << serverResponse << '\n';
-    //}
-
-    std::string serverResponse(tempBuffer.begin(), tempBuffer.end());
-    std::cout << "\nClient: Server responded back saying: " << serverResponse << '\n';
-
-    // Clean up
-    close(clientSocket);
-    return 0;
 }

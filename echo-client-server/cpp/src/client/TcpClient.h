@@ -12,7 +12,9 @@ class TcpClient {
 public:
     static int createClient(const char* host, const char* port, int maxPending);
     static bool setRecvTimeout(int socketFd, int seconds);
-    static std::string createEchoMessage(const std::string &messageBody);
+
+private:
+
 };
 
 
