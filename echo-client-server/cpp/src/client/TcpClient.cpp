@@ -6,19 +6,20 @@
 
 #include <iostream>
 #include <string.h>
-
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <netinet/in.h>
 #include <unistd.h>
 #include <netdb.h>
-#include <cstring>
+
 #include "../util/logger/Logger.h"
 
 
 // GLOBAL VARIABLES //
 const int PORT = 9002;
 const int MAX_PENDING = 5;
+
+TcpClient tcpClient;
 
 
 // MAIN ENTRY POINT OF APPLICATION //
@@ -31,29 +32,9 @@ int main() {
         return 1;
     }
 
-    // Future Improvement: Use a loop to send() since more than 1 send() might be needed
-    // Sending message to server
-    std::string message = "Hello World from client";
-    if (send(clientSocket, message.c_str(), message.size(), 0) == -1) {
-        Logger::log(Logger::STDERR, true, "Failed to send message to server");
-        close(clientSocket);
-        return 1;
-    }
-    Logger::log(Logger::STDOUT, true, "Sent the following message to the server: " + message);
-
-    // IMPORTANT: Need to parse response from server and remove the '\r\n\r\n' since the console isn't printing it properly
-    int length = 0;
-    std::vector<char> tempBuffer(80);
-
-    recv(clientSocket, tempBuffer.data(), tempBuffer.size(), 0);
-
-    //while ((length = recv(clientSocket, tempBuffer.data(), tempBuffer.size(), 0)) > 0) {
-    //  std::string serverResponse(tempBuffer.begin(), tempBuffer.begin() + length);
-    //  std::cout << "Client: Server responded back saying: " << serverResponse << '\n';
-    //}
-
-    std::string serverResponse(tempBuffer.begin(), tempBuffer.end());
-    Logger::log(Logger::STDOUT, true, "Server responded back saying: " + serverResponse);
+    tcpClient.sendClientRequest(clientSocket, "Hello World from client");
+    tcpClient.processServerResponse(clientSocket);
+    // NOTE: log the server response after updating above method to output server response
 
     // Clean up
     close(clientSocket);
@@ -131,4 +112,32 @@ bool TcpClient::setRecvTimeout(const int socketFd, const int seconds) {
     }
     Logger::log(Logger::STDOUT, true, "setsockopt(SO_RCVTIMEO) set socket timeout to " + std::to_string(seconds));
     return true;
+}
+
+bool TcpClient::sendClientRequest(const int clientSocket, const std::string &request) {
+    // Future Improvement: Use a loop to send() since more than 1 send() might be needed
+    if (send(clientSocket, request.c_str(), request.size(), 0) == -1) {
+        Logger::log(Logger::STDERR, true, "Failed to send message to server");
+        close(clientSocket);
+        return false;
+    }
+    Logger::log(Logger::STDOUT, true, "Sent the following message to the server: " + request);
+    return true;
+}
+
+void TcpClient::processServerResponse(const int clientSocket) {
+    // Note: Update method to return a serverResponse struct
+
+    int length = 0;
+    std::vector<char> tempBuffer(80);
+
+    recv(clientSocket, tempBuffer.data(), tempBuffer.size(), 0);
+
+    //while ((length = recv(clientSocket, tempBuffer.data(), tempBuffer.size(), 0)) > 0) {
+    //  std::string serverResponse(tempBuffer.begin(), tempBuffer.begin() + length);
+    //  std::cout << "Client: Server responded back saying: " << serverResponse << '\n';
+    //}
+
+    std::string serverResponse(tempBuffer.begin(), tempBuffer.end());
+    Logger::log(Logger::STDOUT, true, "Server responded back saying: " + serverResponse);
 }
