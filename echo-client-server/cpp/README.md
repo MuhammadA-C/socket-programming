@@ -1,4 +1,22 @@
+## Description
 
+
+---
+## Protocol
+
+    ECHO <INSERT_MESSAGE_LENGTH>\r\n\r\n<INSERT_MESSAGE_BODY>\r\n\r\n
+
+* Protocol: ECHO
+* MESSAGE_LENGTH:
+* MESSAGE_BODY:
+* `\r\n\r\n`:
+  * Added at end of the header
+  * Added at the end of the MESSAGE_BODY
+
+
+Example
+
+    ECHO 11\r\n\r\nHello World\r\n\r\n
 
 ---
 ## CMake
