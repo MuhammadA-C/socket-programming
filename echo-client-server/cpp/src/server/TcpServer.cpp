@@ -93,6 +93,22 @@ std::string TcpServer::createEchoMessage(const std::string &messageBody) {
     return ECHO_PROTOCOL + " " + std::to_string(messageBody.size()) + END_SYMBOL + messageBody + END_SYMBOL;
 }
 
+std::string convertMessage(const std::string &message) {
+    std::string convertedMessage;
+
+    for (int i = 0; i < message.length(); i++) {
+        if (message[i] == '\r') {
+            convertedMessage += "\\r";
+            continue;
+        } else if (message[i] == '\n') {
+            convertedMessage += "\\n";
+            continue;
+        }
+        convertedMessage += message[i];
+    }
+    return convertedMessage;
+}
+
 
 int main() {
     // Note: Allow on server startup to supply port number, max pending, and help via CLI
@@ -102,15 +118,15 @@ int main() {
 
     int serverSocket = TcpServer::createServer(NULL, std::to_string(PORT).c_str(), MAX_PENDING);
     if (serverSocket == -1) {
-        std::cerr << "Server: Setup failed." << '\n';
+        std::cerr << "(Server) Setup failed." << '\n';
         return 1;
     }
-    std::cout << "Server: Listening on port " << PORT << '\n';
+    std::cout << "(Server) Listening on port " << PORT << '\n';
 
     // Continually accepts client connections and sends the response echoed back
     while (true) {
         int clientFd = accept(serverSocket, NULL, NULL);
-        std::cout << "Server: Accepting client connection\n";
+        std::cout << "(Server) Accepting client connection\n";
 
         // Need a timeout in case the client has too long of a delay between messages/recv()
         TcpServer::setRecvTimeout(clientFd, 10);
@@ -128,29 +144,27 @@ int main() {
              * 1. Get length of the message the client is sending from the header
              * 2. Keep reading until full message size is received (or until timeout)
              */
+            break;
         }
-
         std::string clientMessage(buffer.begin(), buffer.end());
-        std::cout << "Server: Received the following message from the client: " << clientMessage << '\n';
+        std::cout << "(Server) Received the following message from the client: " << clientMessage << '\n';
 
         // Future Improvement: Change send() to a loop since 1 send() might not be enough
         // Responds back to client
         if (receivedBytes == -1) {
             const std::string response = TcpServer::createEchoMessage("Failed to receive message");
-            std::cout << "Test: " << response << '\n';
-
+            std::cout << "\n(Server) Responded back with: " << convertMessage(response) << "\n\n";
             send(clientFd, response.c_str(), response.size(), 0);
         } else {
             // echo back message
             const std::string response = TcpServer::createEchoMessage(clientMessage);
-            std::cout << "Test: " << response << '\n';
+            std::cout << "\n(Server) Responded back with: " << convertMessage(response) << "\n\n";
             send(clientFd, response.c_str(), response.size(), 0);
         }
-        std::cout << "Server: Responded back to client\n";
 
         // Clean up socket
         close(clientFd);
-        std::cout << "Server: Attempted to close client socket\n";
+        std::cout << "(Server) Attempted to close client socket\n";
     }
 
     // Cleans up socket
