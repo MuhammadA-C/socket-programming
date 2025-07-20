@@ -6,7 +6,7 @@
 
 ### Protocol Format
 
-    ECHO <INSERT_MESSAGE_LENGTH>\r\n\r\n<INSERT_MESSAGE_BODY>\r\n\r\n
+    ECHO <INSERT_MESSAGE_LENGTH>\r\n<INSERT_MESSAGE_BODY>\r\n
 
 * **Protocol:** `ECHO`
 * **MESSAGE_LENGTH:** The length of the message, which is used by client/server to know how many bytes will be sent
@@ -17,7 +17,7 @@
 
 ### Example
 
-    ECHO 11\r\n\r\nHello World\r\n\r\n
+    ECHO 11\r\nHello World\r\n\
 
 ---
 ## Developer Onboarding 

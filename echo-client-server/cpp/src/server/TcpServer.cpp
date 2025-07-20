@@ -87,12 +87,8 @@ bool TcpServer::setRecvTimeout(const int socketFd, const int seconds) {
 }
 
 std::string TcpServer::createEchoMessage(const std::string &messageBody) {
-   // if (messageBody.empty()) {
-      //  return "";
-    //}
-
     const std::string ECHO_PROTOCOL = "ECHO";
-    const std::string END_SYMBOL = "\r\n\r\n";
+    const std::string END_SYMBOL = "\r\n";
 
     return ECHO_PROTOCOL + " " + std::to_string(messageBody.size()) + END_SYMBOL + messageBody + END_SYMBOL;
 }
@@ -126,6 +122,7 @@ int main() {
         while ((receivedBytes = recv(clientFd, tempBuffer.data(), tempBuffer.size(), 0)) > 0) {
             buffer.insert(buffer.end(), tempBuffer.begin(), tempBuffer.begin() + receivedBytes);
 
+            // BUG: Need to add beak condition
             /*
              * Future Improvement:
              * 1. Get length of the message the client is sending from the header
@@ -133,15 +130,20 @@ int main() {
              */
         }
 
+        std::string clientMessage(buffer.begin(), buffer.end());
+        std::cout << "Server: Received the following message from the client: " << clientMessage << '\n';
+
         // Future Improvement: Change send() to a loop since 1 send() might not be enough
         // Responds back to client
         if (receivedBytes == -1) {
             const std::string response = TcpServer::createEchoMessage("Failed to receive message");
+            std::cout << "Test: " << response << '\n';
+
             send(clientFd, response.c_str(), response.size(), 0);
         } else {
             // echo back message
-            std::string clientMessage(buffer.begin(), buffer.end());
             const std::string response = TcpServer::createEchoMessage(clientMessage);
+            std::cout << "Test: " << response << '\n';
             send(clientFd, response.c_str(), response.size(), 0);
         }
         std::cout << "Server: Responded back to client\n";
