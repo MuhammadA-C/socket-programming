@@ -22,7 +22,7 @@ public:
      * @param isClient true for client, otherwise false. Used to prepend '(Client)' or '(Server)' to the message
      * @param message string message to log
      */
-    void log(LogLevel logLevel, bool isClient, const std::string &message);
+    static void log(LogLevel logLevel, bool isClient, const std::string &message);
 };
 
 

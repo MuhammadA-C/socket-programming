@@ -7,9 +7,45 @@
 
 class TcpServer {
 public:
-    static int createServer(const char* host, const char* port, int maxPending);
+    /**
+     *
+     */
+    struct clientRequest {
+        int clientFd;
+        ssize_t totalReceivedBytes;
+        std::string message;
+    };
+
+    /**
+     *
+     * @param host
+     * @param port
+     * @param maxPending
+     * @return
+     */
+    int createServer(const char* host, const char* port, int maxPending);
+
+    /**
+     *
+     * @param socketFd
+     * @param seconds
+     * @return
+     */
     static bool setRecvTimeout(int socketFd, int seconds);
-    static std::string createEchoMessage(const std::string &messageBody);
+
+    /**
+     *
+     * @param clientFd
+     * @param receivedBytes
+     * @param clientMessage
+     */
+    void sendServerResponse(int clientFd, ssize_t receivedBytes, const std::string &clientMessage);
+
+    /**
+     *
+     * @param outClientRequest
+     */
+    void processRequest(TcpServer::clientRequest &outClientRequest);
 
 private:
 
