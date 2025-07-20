@@ -4,45 +4,47 @@
 ---
 ## Protocol
 
+### Protocol Format
+
     ECHO <INSERT_MESSAGE_LENGTH>\r\n\r\n<INSERT_MESSAGE_BODY>\r\n\r\n
 
-* Protocol: ECHO
-* MESSAGE_LENGTH:
-* MESSAGE_BODY:
-* `\r\n\r\n`:
+* **Protocol:** `ECHO`
+* **MESSAGE_LENGTH:** The length of the message, which is used by client/server to know how many bytes will be sent
+* **MESSAGE_BODY:** The actual message (text or bytes) that is sent to the client/server
+* **\r\n\r\n**:
   * Added at end of the header
   * Added at the end of the MESSAGE_BODY
 
-
-Example
+### Example
 
     ECHO 11\r\n\r\nHello World\r\n\r\n
 
 ---
-## CMake
+## Developer Onboarding 
+
+### CMake
 
 * https://cmake.org/cmake/help/latest/guide/tutorial/index.html
 
+#### Commands
 
-### Commands
-
-#### Step-1: Make build folder (doesn't exist)
+##### Step-1: Make build folder (doesn't exist)
 
     mkdir build
 
-#### Step-2: Go inside the build folder
+##### Step-2: Go inside the build folder
     
     cd build
 
-#### Step-3: 
+##### Step-3: 
 
     cmake ..
 
-#### Step-4: 
+##### Step-4: 
 
     cmake --build .
 
-#### Step-5: Run executable inside the ./build folder
+##### Step-5: Run executable inside the ./build folder
 
      cd build 
 
