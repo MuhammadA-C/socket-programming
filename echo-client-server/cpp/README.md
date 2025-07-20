@@ -17,7 +17,7 @@
 
 ### Example
 
-    ECHO 11\r\nHello World\r\n\
+    ECHO 11\r\nHello World\r\n
 
 ---
 ## Developer Onboarding 
