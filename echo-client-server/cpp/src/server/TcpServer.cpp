@@ -28,6 +28,7 @@ int  main() {
     int serverSocket = tcpServer.initialize(NULL, std::to_string(PORT).c_str(), MAX_PENDING);
     if (serverSocket == -1) {
         Logger::log(Logger::STDERR, false, "Setup failed.");
+        close(serverSocket);
         return 1;
     }
     Logger::log(Logger::STDOUT, false, "Listening on port " + std::to_string(PORT));
@@ -40,7 +41,7 @@ int  main() {
         Logger::log(Logger::STDOUT, false, "Accepting client connection");
 
         // Need a timeout in case the client has too long of a delay between messages/recv()
-        TcpServer::setRecvTimeout(clientRequest.clientFd, 10);
+        TcpServer::setRecvTimeout(clientRequest.clientFd, 5);
 
         tcpServer.processRequest(clientRequest);
         Logger::log(Logger::STDOUT, false, "Received the following message from the client: " + clientRequest.message);
@@ -104,14 +105,12 @@ int TcpServer::initialize(const char *host, const char *port, int maxPending) {
     freeaddrinfo(addressInfoResult);
     if (ptrAddressInfo == NULL) {
         Logger::log(Logger::STDERR, false, "Failed creating socket and binding to port.");
-        close(serverSocket);
         return -1;
     }
 
     // Setting server socket to listen to port for connections
     if (listen(serverSocket, maxPending) == -1) {
         Logger::log(Logger::STDERR, false, "Failed listening for connections.");
-        close(serverSocket);
         return -1;
     }
     return serverSocket;
@@ -154,7 +153,6 @@ void TcpServer::processRequest(TcpServer::ClientRequest &outClientRequest) {
          * 1. Get length of the message the client is sending from the header
          * 2. Keep reading until full message size is received (or until timeout)
          */
-        break;
     }
 
     // Filling in data for output
