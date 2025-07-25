@@ -39,7 +39,7 @@ public:
      * @param receivedBytes
      * @param clientMessage
      */
-    void sendServerResponse(int clientFd, ssize_t receivedBytes, const std::string &clientMessage);
+    bool sendServerResponse(int clientFd, ssize_t receivedBytes, const std::string &clientMessage);
 
     /**
      *

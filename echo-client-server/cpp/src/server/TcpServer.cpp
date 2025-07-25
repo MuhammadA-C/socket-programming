@@ -45,7 +45,9 @@ int  main() {
         tcpServer.processRequest(clientRequest);
         Logger::log(Logger::STDOUT, false, "Received the following message from the client: " + clientRequest.message);
 
-        tcpServer.sendServerResponse(clientRequest.clientFd, clientRequest.totalReceivedBytes, clientRequest.message);
+        if (!tcpServer.sendServerResponse(clientRequest.clientFd, clientRequest.totalReceivedBytes, clientRequest.message)) {
+            Logger::log(Logger::STDOUT, false, "Failed to send response to client");
+        }
 
         // Clean up socket
         close(clientRequest.clientFd);
@@ -161,20 +163,20 @@ void TcpServer::processRequest(TcpServer::ClientRequest &outClientRequest) {
     outClientRequest.totalReceivedBytes = receivedBytes;
 }
 
-void TcpServer::sendServerResponse(const int clientFd, const ssize_t receivedBytes, const std::string &clientMessage) {
-    // Future Improvement: Change send() to a loop since 1 send() might not be enough
+bool TcpServer::sendServerResponse(const int clientFd, const ssize_t receivedBytes, const std::string &clientMessage) {
+    std::string response = receivedBytes < 0 ? EchoProtocol::createEchoMessage("Failed to receive message") :
+            EchoProtocol::createEchoMessage(clientMessage);
 
-    // Send error response
-    if (receivedBytes == -1) {
-        const std::string response = EchoProtocol::createEchoMessage("Failed to receive message");
-        Logger::log(Logger::STDOUT, false, "Responded back with: " + response);
-        send(clientFd, response.c_str(), response.size(), 0);
-        return;
+    Logger::log(Logger::STDOUT, false, "Responding back with: " + response);
+
+    int totalBytesSent = 0;
+    while (totalBytesSent < response.length()) {
+        int bytesSent = send(clientFd, response.c_str() + totalBytesSent, response.length() - totalBytesSent, 0);
+        if (bytesSent < 0) {
+            return false;
+        }
+        totalBytesSent += bytesSent;
     }
-
-    // Echo back message
-    const std::string response = EchoProtocol::createEchoMessage(clientMessage);
-    Logger::log(Logger::STDOUT, false, "Responded back with: " + response);
-    send(clientFd, response.c_str(), response.size(), 0);
+    return true;
 }
 
