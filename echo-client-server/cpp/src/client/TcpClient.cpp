@@ -29,13 +29,19 @@ int main() {
     int clientSocket = TcpClient::initialize("localhost", std::to_string(PORT).c_str(), MAX_PENDING);
     if (clientSocket == -1) {
         Logger::log(Logger::STDERR, true, "Setup failed.");
+        close(clientSocket);
         return 1;
     }
 
-    tcpClient.sendClientRequest(clientSocket, "Hello World from client");
+    if (!tcpClient.sendClientRequest(clientSocket, "Hello World from client")) {
+        Logger::log(Logger::STDERR, true, "Failed to send message to server");
+        close(clientSocket);
+        return 1;
+    }
 
     TcpClient::ServerResponse serverResponse = tcpClient.processServerResponse(clientSocket);
-    Logger::log(Logger::STDOUT, true, "Servers response: "+ serverResponse.message);
+    Logger::log(Logger::STDOUT, true, "Servers response: " + serverResponse.message);
+
 
     // Note: Add logic to parse out the message body length to verify if received the full message
 
@@ -84,7 +90,6 @@ int TcpClient::initialize(const char *host, const char *port, int maxPending) {
     freeaddrinfo(addressInfoResult);
     if (ptrAddressInfo == NULL) {
         Logger::log(Logger::STDERR, true, "Failed creating socket and connecting to port.");
-        close(clientSocket);
         return -1;
     }
     return clientSocket;
@@ -114,13 +119,17 @@ bool TcpClient::setRecvTimeout(const int socketFd, const int seconds) {
 }
 
 bool TcpClient::sendClientRequest(const int clientSocket, const std::string &request) {
-    // Future Improvement: Use a loop to send() since more than 1 send() might be needed
-    if (send(clientSocket, request.c_str(), request.size(), 0) == -1) {
-        Logger::log(Logger::STDERR, true, "Failed to send message to server");
-        close(clientSocket);
-        return false;
+    Logger::log(Logger::STDOUT, true, "Sending the following message to the server: " + request);
+
+    int totalBytesSent = 0;
+    while (totalBytesSent < request.length()) {
+        int sentBytes = send(clientSocket, request.c_str() + totalBytesSent, request.length() - totalBytesSent, 0);
+
+        if (sentBytes < 0) {
+            return false;
+        }
+        totalBytesSent += sentBytes;
     }
-    Logger::log(Logger::STDOUT, true, "Sent the following message to the server: " + request);
     return true;
 }
 
