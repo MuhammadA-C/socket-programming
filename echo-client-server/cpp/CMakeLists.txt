@@ -14,3 +14,9 @@ add_executable(tcp_client
         src/util/logger/Logger.cpp
         src/util/echo_protocol/EchoProtocol.cpp
 )
+
+add_executable(udp_server
+        src/server/UdpServer.cpp
+        src/util/logger/Logger.cpp
+        src/util/echo_protocol/EchoProtocol.cpp
+)

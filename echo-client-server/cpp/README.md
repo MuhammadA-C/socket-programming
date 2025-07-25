@@ -1,6 +1,64 @@
 ## Description
 
 
+
+---
+## Echo Client Server - TCP
+
+* File: `TcpServer`
+* File: `TcpClient`
+
+
+
+---
+## Echo Client Server - UDP
+
+* File: `UdpServer`
+* File: `UdpClient`
+
+**Requirements:**
+* Client sends message to server
+* Server echos back the message to the client
+
+**Assumptions:**
+* The entire message will be sent with 1 sendto()
+
+**Packet Structure**
+
+    [MESSAGE_ID][SEQUENCE_NUMBER][TOTAL_PARTS][DATA]
+
+* **MESSAGE_ID:** Unique identifier for the message
+* **SEQUENCE_NUMBER:** Sequence number of the chunk (e.g. 0,1,2)
+* **TOTAL_PARTS:** Total number of chunks expected
+* **DATA:** Actual content (partial)
+
+
+---
+## Echo Client Server - Reliable UDP
+
+* File: `ReliableUdpServer`
+* File: `ReliableUdpClient`
+
+**Requirements:**
+* Client sends message to server
+* Server echos back the message to the client
+* Verify (ACK) that packets were received
+* Remove duplicate packets
+* Ensure packets are in the correct order
+
+**Assumptions:**
+* More than 1 sendto() is required to send the entire message
+
+**Packet Structure**
+
+    [MESSAGE_ID][SEQUENCE_NUMBER][TOTAL_PARTS][DATA]
+
+* **MESSAGE_ID:** Unique identifier for the message
+* **SEQUENCE_NUMBER:** Sequence number of the chunk (e.g. 0,1,2)
+* **TOTAL_PARTS:** Total number of chunks expected
+* **DATA:** Actual content (partial)
+
+
 ---
 ## Protocol
 

@@ -1,6 +1,5 @@
 #include "TcpServer.h"
 #include <iostream>
-#include <string>
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <netinet/in.h>
@@ -68,8 +67,8 @@ int  main() {
 // Future Improvement: Move function to a different class and file
 int TcpServer::initialize(const char *host, const char *port, int maxPending) {
     struct addrinfo addressInfoHint{};
-    struct addrinfo *addressInfoResult;
-    struct addrinfo *ptrAddressInfo;
+    struct addrinfo* addressInfoResult;
+    struct addrinfo* ptrAddressInfo;
 
     addressInfoHint.ai_family = AF_UNSPEC; // allow either IPv4 or IPv6
     addressInfoHint.ai_socktype = SOCK_STREAM; // TCP socket
