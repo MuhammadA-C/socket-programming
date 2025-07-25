@@ -5,7 +5,7 @@
 #include "TcpClient.h"
 
 #include <iostream>
-#include <string.h>
+#include <string>
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <netinet/in.h>
@@ -26,15 +26,19 @@ TcpClient tcpClient;
 int main() {
     // Note: Allow on client startup to supply port number, max pending, and help via CLI
 
-    int clientSocket = TcpClient::createClient("localhost", std::to_string(PORT).c_str(), MAX_PENDING);
+    int clientSocket = TcpClient::initialize("localhost", std::to_string(PORT).c_str(), MAX_PENDING);
     if (clientSocket == -1) {
         Logger::log(Logger::STDERR, true, "Setup failed.");
         return 1;
     }
 
     tcpClient.sendClientRequest(clientSocket, "Hello World from client");
-    tcpClient.processServerResponse(clientSocket);
-    // NOTE: log the server response after updating above method to output server response
+
+    TcpClient::ServerResponse serverResponse = tcpClient.processServerResponse(clientSocket);
+    Logger::log(Logger::STDOUT, true, "Servers response: "+ serverResponse.message);
+
+    // Note: Add logic to parse out the message body length to verify if received the full message
+
 
     // Clean up
     close(clientSocket);
@@ -45,12 +49,11 @@ int main() {
 // METHODS //
 
 // Future Improvement: Move function to a different class and file
-int TcpClient::createClient(const char *host, const char *port, int maxPending) {
+int TcpClient::initialize(const char *host, const char *port, int maxPending) {
     struct addrinfo addressInfoHint{};
     struct addrinfo *addressInfoResult;
     struct addrinfo *ptrAddressInfo;
 
-    memset(&addressInfoHint, 0, sizeof addressInfoHint); // ensures the struct is empty
     addressInfoHint.ai_family = AF_UNSPEC; // don't care IPv4 or IPv6
     addressInfoHint.ai_socktype = SOCK_STREAM; // TCP stream sockets
     addressInfoHint.ai_flags = AI_PASSIVE; // fill in my IP for me
@@ -63,16 +66,12 @@ int TcpClient::createClient(const char *host, const char *port, int maxPending) 
 
     // Loops through results from getaddrinfo() and binds port to the first one that works
     int clientSocket = -1;
-    const int REUSE_PORT = 1;
     for (ptrAddressInfo = addressInfoResult; ptrAddressInfo != NULL; ptrAddressInfo = ptrAddressInfo->ai_next) {
         // Creates socket, and checks if failed
         clientSocket = socket(ptrAddressInfo->ai_family, ptrAddressInfo->ai_socktype, ptrAddressInfo->ai_protocol);
         if (clientSocket == -1) {
             continue;
         }
-
-        // Makes port reusable
-        setsockopt(clientSocket, SOL_SOCKET, SO_REUSEADDR, &REUSE_PORT, sizeof(REUSE_PORT));
 
         // Connect to server
         if (connect(clientSocket, ptrAddressInfo->ai_addr, ptrAddressInfo->ai_addrlen) == -1) {
@@ -125,19 +124,16 @@ bool TcpClient::sendClientRequest(const int clientSocket, const std::string &req
     return true;
 }
 
-void TcpClient::processServerResponse(const int clientSocket) {
-    // Note: Update method to return a serverResponse struct
-
-    int length = 0;
+TcpClient::ServerResponse TcpClient::processServerResponse(const int clientSocket) {
+    int receivedBytes = 0;
     std::vector<char> tempBuffer(80);
+    int totalBytesReceived = 0;
+    while ((receivedBytes = recv(clientSocket, tempBuffer.data(), tempBuffer.size(), 0)) > 0) {
+        totalBytesReceived += receivedBytes;
+    }
 
-    recv(clientSocket, tempBuffer.data(), tempBuffer.size(), 0);
-
-    //while ((length = recv(clientSocket, tempBuffer.data(), tempBuffer.size(), 0)) > 0) {
-    //  std::string serverResponse(tempBuffer.begin(), tempBuffer.begin() + length);
-    //  std::cout << "Client: Server responded back saying: " << serverResponse << '\n';
-    //}
-
-    std::string serverResponse(tempBuffer.begin(), tempBuffer.end());
-    Logger::log(Logger::STDOUT, true, "Server responded back saying: " + serverResponse);
+    TcpClient::ServerResponse serverResponse;
+    serverResponse.message = tempBuffer.data();
+    serverResponse.totalReceivedBytes = totalBytesReceived;
+    return serverResponse;
 }

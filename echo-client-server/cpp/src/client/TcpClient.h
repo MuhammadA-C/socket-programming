@@ -13,15 +13,15 @@ public:
     /**
      *
      */
-    struct serverResponse {
+    struct ServerResponse {
         ssize_t totalReceivedBytes;
         std::string message;
     };
 
-    static int createClient(const char* host, const char* port, int maxPending);
+    static int initialize(const char* host, const char* port, int maxPending);
     static bool setRecvTimeout(int socketFd, int seconds);
     bool sendClientRequest(int clientSocket, const std::string &request);
-    void processServerResponse(int clientSocket);
+    ServerResponse processServerResponse(int clientSocket);
 
 private:
 

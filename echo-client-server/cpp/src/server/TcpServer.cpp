@@ -25,7 +25,7 @@ TcpServer tcpServer;
 int  main() {
     // Note: Allow on server startup to supply port number, max pending, and help via CLI
 
-    int serverSocket = tcpServer.createServer(NULL, std::to_string(PORT).c_str(), MAX_PENDING);
+    int serverSocket = tcpServer.initialize(NULL, std::to_string(PORT).c_str(), MAX_PENDING);
     if (serverSocket == -1) {
         Logger::log(Logger::STDERR, false, "Setup failed.");
         return 1;
@@ -35,7 +35,7 @@ int  main() {
 
     // Continually accepts client connections and sends the response echoed back
     while (true) {
-        TcpServer::clientRequest clientRequest;
+        TcpServer::ClientRequest clientRequest;
         clientRequest.clientFd = accept(serverSocket, NULL, NULL);
         Logger::log(Logger::STDOUT, false, "Accepting client connection");
 
@@ -63,14 +63,13 @@ int  main() {
 // METHODS //
 
 // Future Improvement: Move function to a different class and file
-int TcpServer::createServer(const char *host, const char *port, int maxPending) {
+int TcpServer::initialize(const char *host, const char *port, int maxPending) {
     struct addrinfo addressInfoHint{};
     struct addrinfo *addressInfoResult;
     struct addrinfo *ptrAddressInfo;
 
-    memset(&addressInfoHint, 0, sizeof addressInfoHint); // ensures the struct is empty
-    addressInfoHint.ai_family = AF_UNSPEC; // don't care IPv4 or IPv6
-    addressInfoHint.ai_socktype = SOCK_STREAM; // TCP stream sockets
+    addressInfoHint.ai_family = AF_UNSPEC; // allow either IPv4 or IPv6
+    addressInfoHint.ai_socktype = SOCK_STREAM; // TCP socket
     addressInfoHint.ai_flags = AI_PASSIVE; // fill in my IP for me
 
     int status = getaddrinfo(host, port, &addressInfoHint, &addressInfoResult);
@@ -139,7 +138,7 @@ bool TcpServer::setRecvTimeout(const int socketFd, const int seconds) {
     return true;
 }
 
-void TcpServer::processRequest(TcpServer::clientRequest &outClientRequest) {
+void TcpServer::processRequest(TcpServer::ClientRequest &outClientRequest) {
     std::vector<char> buffer;
     std::vector<char> tempBuffer(BUFFER_SIZE);
     ssize_t receivedBytes = 0;

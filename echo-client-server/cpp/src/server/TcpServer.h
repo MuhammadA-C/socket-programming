@@ -10,7 +10,7 @@ public:
     /**
      *
      */
-    struct clientRequest {
+    struct ClientRequest {
         int clientFd;
         ssize_t totalReceivedBytes;
         std::string message;
@@ -23,7 +23,7 @@ public:
      * @param maxPending
      * @return
      */
-    int createServer(const char* host, const char* port, int maxPending);
+    int initialize(const char* host, const char* port, int maxPending);
 
     /**
      *
@@ -45,7 +45,7 @@ public:
      *
      * @param outClientRequest
      */
-    void processRequest(TcpServer::clientRequest &outClientRequest);
+    void processRequest(TcpServer::ClientRequest &outClientRequest);
 
 private:
 
